@@ -1,0 +1,801 @@
+{
+  "name": "AI Shipment Tracking & Exception Management Automation",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "AI Shipment Tracking & Exception Management\n\nAI-powered shipment automation for logistics operations.\n\nWho's it for\n• Logistics & cargo teams\n• Shipment operations teams\n• Businesses monitoring delivery exceptions\n\nHow it works\n1. Receives shipment events via webhook.\n2. Normalizes shipment data.\n3. Uses Google Gemini for AI classification.\n4. Validates status, exceptions, and priority.\n5. Builds customer notifications.\n6. Sends updates through WhatsApp.\n7. Logs shipment activity in Google Sheets.\n8. Returns API response and handles errors.\n\nAI Classification\n• Shipment status\n• Exception type\n• Priority\n• Confidence\n• Human-review requirement\n\nClient Operational View\nGoogle Sheets provides a simple operational tracker\nfor shipment status, exceptions, priorities,\nand notification results.\n\nNotifications\nWhatsApp sends shipment status and exception updates.\n\nRequirements\n• n8n\n• Google Gemini\n• Google Sheets\n• WhatsApp Business API\n• Shipment event source\n\n",
+        "height": 1076,
+        "width": 660,
+        "color": 2
+      },
+      "id": "1d40e12f-9493-4610-af4b-60ed6537521e",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        704,
+        -384
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 1. Trigger & Intake\n\nAccepts incoming shipment events through a webhook.\nSupports real-time shipment events and scheduled polling as an optional fallback.",
+        "height": 612,
+        "width": 804,
+        "color": 5
+      },
+      "id": "356ce562-cc63-43f5-99b0-edbe1b90ed48",
+      "name": "Sticky Note1",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        1520,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 2. AI Classification & Validation\n\nAnalyzes shipment events, validates shipment data, and classifies shipment status and potential exceptions using AI.",
+        "height": 636,
+        "width": 852,
+        "color": 3
+      },
+      "id": "a76e2485-7df1-42ac-99ed-292afd9739aa",
+      "name": "Sticky Note2",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        2352,
+        -96
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "content": "## 3. Notification & Operations Tracking\n\nSends shipment notifications via WhatsApp, records shipment events in Google Sheets, \nand provides an operational view of shipment status and exceptions",
+        "height": 616,
+        "width": 848,
+        "color": "#941489"
+      },
+      "id": "8bb3462d-163c-40b1-9bd3-680f48a6430d",
+      "name": "Sticky Note3",
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        3232,
+        -80
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "shipment-tracking-inbound",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "e921e062-acc0-4688-8786-e77b8aa607c0",
+      "name": "Shipment Event Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "position": [
+        1584,
+        64
+      ],
+      "webhookId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/15 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "562b5e2d-2919-4deb-82dc-02d7b34e500f",
+      "name": "Poll Shipment System",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "position": [
+        1584,
+        256
+      ],
+      "typeVersion": 1.2
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "name": "shipmentId",
+              "type": "string",
+              "value": "={{ $json.shipmentId || $json.body?.shipmentId || 'UNKNOWN' }}",
+              "id": "31dbc647-5b40-43e9-8d99-629b167eda2b"
+            },
+            {
+              "name": "trackingNumber",
+              "type": "string",
+              "value": "={{ $json.trackingNumber || $json.body?.trackingNumber || '' }}",
+              "id": "5a9ed671-cc12-4737-8119-3ddd41111ba2"
+            },
+            {
+              "name": "customerName",
+              "type": "string",
+              "value": "={{ $json.customerName || $json.body?.customerName || 'Valued Customer' }}",
+              "id": "6b7c3b16-6d8e-447d-9fb6-0f0f7846632e"
+            },
+            {
+              "name": "customerPhone",
+              "type": "string",
+              "value": "={{ $json.customerPhone || $json.body?.customerPhone || '' }}",
+              "id": "5b96d5bd-1c00-402b-8ef9-7d4ebf9d758b"
+            },
+            {
+              "name": "origin",
+              "type": "string",
+              "value": "={{ $json.origin || $json.body?.origin || '' }}",
+              "id": "c6717fac-cc87-46e2-81dc-5cc5b59dd883"
+            },
+            {
+              "name": "destination",
+              "type": "string",
+              "value": "={{ $json.destination || $json.body?.destination || '' }}",
+              "id": "1c8562e9-acb2-4316-aafd-dec84507478d"
+            },
+            {
+              "name": "currentLocation",
+              "type": "string",
+              "value": "={{ $json.currentLocation || $json.body?.currentLocation || '' }}",
+              "id": "69a7752e-42d6-47b1-a731-a679a5ff4425"
+            },
+            {
+              "name": "shipmentStatus",
+              "type": "string",
+              "value": "={{ $json.shipmentStatus || $json.body?.shipmentStatus || '' }}",
+              "id": "994d6ed3-6903-40f7-b1b1-fa4d5a67ac05"
+            },
+            {
+              "name": "expectedDelivery",
+              "type": "string",
+              "value": "={{ $json.expectedDelivery || $json.body?.expectedDelivery || '' }}",
+              "id": "ea570497-828e-4e5c-a68d-43f9f3eb260a"
+            },
+            {
+              "name": "lastUpdated",
+              "type": "string",
+              "value": "={{ $json.lastUpdated || $json.body?.lastUpdated || '' }}",
+              "id": "46ecf83c-0b72-4fa8-83bb-6c7d3e100b7c"
+            },
+            {
+              "id": "fcf71a13-7c18-4ac9-80a4-dff4e3931631",
+              "name": "remarks",
+              "value": "={{ $json.remarks || $json.body?.remarks || '' }}",
+              "type": "string"
+            },
+            {
+              "id": "868090dc-b34c-46f8-a628-85a23d859890",
+              "name": "ingestedAt",
+              "value": "={{ new Date().toISOString() }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "907735d0-f10b-4f0b-8614-3e4d42f65e99",
+      "name": "Normalize Shipment Data",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        1808,
+        160
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !!$json.output.shipment_status }}",
+              "id": "508b8340-a96f-48c2-bb0a-2779b400b07b"
+            },
+            {
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "leftValue": "={{ !!$json.output.exception_type }}",
+              "id": "efe3940d-6e57-42cd-adee-1a87f3578ea3"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "00334607-3d55-434b-9e73-6826b3bc8e19",
+      "name": "Validate Shipment Event",
+      "type": "n8n-nodes-base.filter",
+      "position": [
+        2384,
+        160
+      ],
+      "typeVersion": 2.2
+    },
+    {
+      "parameters": {
+        "amount": 2,
+        "unit": "seconds"
+      },
+      "id": "ce99b798-732b-4542-a0c5-bc5bfbec8b08",
+      "name": "API Rate Limit Protection",
+      "type": "n8n-nodes-base.wait",
+      "position": [
+        2608,
+        160
+      ],
+      "webhookId": "b2c3d4e5-f6a7-8901-bcde-f12345678901",
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = {\n  ...$('Normalize Shipment Data').item.json,\n  ...($input.item.json.output || {})\n};\n\n// AI shipment classification\nconst shipmentStatus = item.shipment_status || item.shipmentStatus || \"UNKNOWN\";\nconst exceptionType = item.exception_type || \"NONE\";\nconst priority = item.priority || \"LOW\";\nconst confidence = Number(item.confidence ?? 0);\nconst requiresHumanReview = Boolean(item.requires_human_review);\nconst reason = item.reason || \"No additional reason provided.\";\n\n// Shipment information\nconst shipmentId = item.shipmentId || \"UNKNOWN\";\nconst trackingNumber = item.trackingNumber || \"N/A\";\nconst customerName = item.customerName || \"Customer\";\nconst customerPhone = item.customerPhone || \"\";\nconst origin = item.origin || \"N/A\";\nconst destination = item.destination || \"N/A\";\nconst currentLocation = item.currentLocation || \"N/A\";\nconst expectedDelivery = item.expectedDelivery || \"N/A\";\nconst lastUpdated = item.lastUpdated || \"N/A\";\nconst remarks = item.remarks || \"\";\n\n// Build notification message\nlet messageText;\n\nif (exceptionType !== \"NONE\") {\n  messageText = [\n    \"Shipment Exception Alert\",\n    \"\",\n    `Shipment: ${shipmentId}`,\n    `Tracking: ${trackingNumber}`,\n    `Status: ${shipmentStatus}`,\n    `Exception: ${exceptionType}`,\n    `Priority: ${priority}`,\n    `Current Location: ${currentLocation}`,\n    `Expected Delivery: ${expectedDelivery}`,\n    \"\",\n    `Reason: ${reason}`,\n    \"\",\n    requiresHumanReview\n      ? \"Action: Human review required.\"\n      : \"Action: Continue operational monitoring.\"\n  ].join(\"\\n\");\n} else {\n  messageText = [\n    \"Shipment Status Update\",\n    \"\",\n    `Hi ${customerName},`,\n    \"\",\n    `Your shipment ${shipmentId} is currently ${shipmentStatus}.`,\n    `Tracking: ${trackingNumber}`,\n    `From: ${origin}`,\n    `To: ${destination}`,\n    `Current location: ${currentLocation}`,\n    `Expected delivery: ${expectedDelivery}`,\n    \"\",\n    \"No shipment exception was detected.\"\n  ].join(\"\\n\");\n}\n\n// Sanitize phone number\nconst rawPhone = String(customerPhone || \"\");\n\nconst recipientPhone = rawPhone\n  .replace(/\\D/g, \"\")\n  .replace(/^0+/, \"\");\n\n// Final output\nreturn {\n  json: {\n    ...item,\n\n    shipmentStatus,\n    exceptionType,\n    priority,\n    confidence,\n    requiresHumanReview,\n    reason,\n\n    notificationType:\n      exceptionType === \"NONE\"\n        ? \"STATUS_UPDATE\"\n        : \"EXCEPTION_ALERT\",\n\n    notificationPriority: priority,\n\n    messageText,\n    recipientPhone,\n\n    notificationPreparedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "8fe1a76e-54f9-4162-873b-75cf117ba4ba",
+      "name": "Build Shipment Notification",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        2832,
+        160
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const item = $input.item.json;\n\nconst shipmentId = item.shipmentId || \"UNKNOWN\";\nconst trackingNumber = item.trackingNumber || \"N/A\";\nconst shipmentStatus = item.shipmentStatus || item.shipment_status || \"UNKNOWN\";\nconst exceptionType = item.exceptionType || item.exception_type || \"NONE\";\nconst priority = item.priority || \"LOW\";\nconst customerPhone = item.customerPhone || item.recipientPhone || \"\";\n\nconst simulatedMessageId =\n  `SIM-${shipmentId}-${Date.now()}`;\n\nreturn {\n  json: {\n    ...item,\n\n    notificationChannel: \"WHATSAPP_SIMULATION\",\n    notificationStatus: \"SIMULATED\",\n    notificationResult: \"TEST_ONLY\",\n    notificationMessageId: simulatedMessageId,\n\n    processingStatus: \"PROCESSED\",\n    processedAt: new Date().toISOString(),\n\n    shipmentReference: shipmentId,\n    trackingReference: trackingNumber,\n\n    notificationNote:\n      \"WhatsApp delivery is simulated for testing. No real WhatsApp message was sent.\"\n  }\n};"
+      },
+      "id": "c157df28-4496-402f-b1af-fe8fa840a630",
+      "name": "Capture Notification Result",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        3280,
+        80
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"shipmentId\": \"{{ $json.shipment_id }}\",\n  \"trackingNumber\": \"{{ $json.tracking_number }}\",\n  \"shipmentStatus\": \"{{ $json.shipment_status }}\",\n  \"exceptionType\": \"{{ $json.exception_type }}\",\n  \"priority\": \"{{ $json.priority }}\",\n  \"confidence\": {{ $json.confidence }},\n  \"requiresHumanReview\": {{ $json.requires_human_review }},\n  \"notificationStatus\": \"{{ $json.notification_status }}\",\n  \"processingStatus\": \"{{ $json.processing_status }}\",\n  \"processedAt\": \"{{ $json.processed_at }}\"\n}",
+        "options": {}
+      },
+      "id": "c126845b-4f30-4b4a-a38e-78ae67661edd",
+      "name": "Shipment API Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "position": [
+        3728,
+        32
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Shipment Error Handler\n// Captures failures from Shipment Notification or Google Sheets update.\n\nconst item = $input.item.json;\n\nreturn {\n  json: {\n    success: false,\n\n    shipmentId: item.shipmentId || item.shipment_id || \"UNKNOWN\",\n    trackingNumber: item.trackingNumber || item.tracking_number || \"UNKNOWN\",\n\n    shipmentStatus:\n      item.shipmentStatus ||\n      item.shipment_status ||\n      \"UNKNOWN\",\n\n    exceptionType:\n      item.exceptionType ||\n      item.exception_type ||\n      \"UNKNOWN\",\n\n    priority: item.priority || \"UNKNOWN\",\n\n    customerPhone:\n      item.customerPhone ||\n      item.customer_phone ||\n      \"UNKNOWN\",\n\n    notificationChannel:\n      item.notificationChannel ||\n      item.notification_channel ||\n      \"SIMULATION\",\n\n    notificationStatus: \"FAILED\",\n\n    processingStatus: \"ERROR\",\n\n    errorMessage:\n      item.error?.message ||\n      item.errorMessage ||\n      \"Unknown shipment workflow error.\",\n\n    errorCode:\n      item.error?.code ||\n      item.errorCode ||\n      \"UNKNOWN_ERROR\",\n\n    failedAt: new Date().toISOString()\n  }\n};"
+      },
+      "id": "54618712-2632-48bd-9c47-a5f75f9c9b43",
+      "name": "Shipment Error Handler",
+      "type": "n8n-nodes-base.code",
+      "position": [
+        3728,
+        256
+      ],
+      "typeVersion": 2
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=You are an AI shipment operations classifier.\n\nAnalyze the shipment information below and classify the shipment.\n\nReturn these fields:\n\n- shipment_status\n- exception_type\n- priority\n- confidence\n- requires_human_review\n- reason\n\nAllowed shipment_status:\n\nIN_TRANSIT\nOUT_FOR_DELIVERY\nDELIVERED\nPENDING\nDELAYED\nEXCEPTION\nFAILED_DELIVERY\nUNKNOWN\n\nAllowed exception_type:\n\nNONE\nNO_MOVEMENT\nLATE_DELIVERY\nADDRESS_ISSUE\nFAILED_DELIVERY\nDAMAGED\nCUSTOMS_HOLD\nMISSING_INFORMATION\nOTHER\n\nAllowed priority:\n\nLOW\nMEDIUM\nHIGH\nCRITICAL\n\n\nSHIPMENT STATUS CLASSIFICATION RULES:\n\n- Use the provided shipmentStatus to determine shipment_status.\n- Do not change the shipment status unless the provided value is unclear or invalid.\n- Use UNKNOWN only when the shipment status cannot be reliably determined.\n\n\nEXCEPTION CLASSIFICATION RULES:\n\n- Use NONE when there is no identifiable shipment exception.\n- Use NO_MOVEMENT when shipment movement appears abnormal or the shipment has remained at the same location for an unusually long period.\n- Use LATE_DELIVERY when the expected delivery date has been missed.\n- Use FAILED_DELIVERY when a delivery attempt has failed.\n- Use ADDRESS_ISSUE when an address problem prevents or delays delivery.\n- Use DAMAGED when shipment damage is reported.\n- Use CUSTOMS_HOLD when customs processing is preventing shipment movement.\n- Use MISSING_INFORMATION when important shipment information required for processing or delivery is missing.\n- Use OTHER when an exception exists but does not match the categories above.\n\n\nPRIORITY RULES:\n\n- LOW = normal shipment activity or minor operational issue.\n- MEDIUM = issue requiring operational attention but not immediate intervention.\n- HIGH = significant shipment exception or failed delivery requiring prompt operational attention.\n- CRITICAL = severe issue requiring immediate intervention or escalation.\n\n\nMANDATORY OPERATIONAL OVERRIDE RULES:\n\n- If shipment_status = FAILED_DELIVERY:\n  exception_type MUST be FAILED_DELIVERY.\n  priority MUST be HIGH.\n  requires_human_review MUST be true.\n\n- If shipment_status = EXCEPTION:\n  exception_type MUST NOT be NONE.\n  priority MUST be at least MEDIUM.\n  requires_human_review MUST be true.\n\n- If exception_type = FAILED_DELIVERY:\n  priority MUST be HIGH.\n  requires_human_review MUST be true.\n\n- If exception_type = DAMAGED:\n  priority MUST be HIGH.\n  requires_human_review MUST be true.\n\n- If exception_type = CUSTOMS_HOLD:\n  priority MUST be HIGH.\n  requires_human_review MUST be true.\n\n- If exception_type = ADDRESS_ISSUE:\n  priority MUST be MEDIUM or higher.\n  requires_human_review MUST be true.\n\n- If exception_type = LATE_DELIVERY:\n  priority MUST be MEDIUM or higher.\n\n- If exception_type = NO_MOVEMENT:\n  priority MUST be MEDIUM or higher.\n\n- If priority = HIGH or CRITICAL:\n  requires_human_review MUST be true.\n\n- If confidence is below 0.80:\n  requires_human_review MUST be true.\n\n- If the shipment information is unclear, incomplete, or contradictory:\n  requires_human_review MUST be true.\n\nThese mandatory operational rules override the model's initial judgment.\n\nDo not return MEDIUM or LOW priority for FAILED_DELIVERY.\n\nDo not return NONE for exception_type when shipment_status is EXCEPTION or FAILED_DELIVERY.\n\n\nCONFIDENCE RULES:\n\n- confidence must be a number between 0 and 1.\n- Confidence should reflect how clearly the provided shipment information supports the classification.\n- Do not automatically use 1 unless the classification is clearly supported by the provided information.\n\n\nHUMAN REVIEW RULES:\n\nSet requires_human_review to true when:\n\n- priority is HIGH or CRITICAL\n- confidence is below 0.80\n- shipment information is unclear or insufficient\n- shipment status indicates FAILED_DELIVERY\n- shipment status indicates EXCEPTION\n- the exception is DAMAGED\n- the exception is CUSTOMS_HOLD\n- the exception is ADDRESS_ISSUE\n\nSet requires_human_review to false when:\n\n- the shipment is operating normally\n- there is no significant exception\n- confidence is sufficient\n- no mandatory human-review rule applies\n\n\nREASON RULES:\n\n- Provide a concise operational explanation for the classification.\n- Explain the evidence from the shipment information that supports the status and exception.\n- Do not invent information.\n- Do not create facts that are not present in the shipment data.\n- Keep the reason clear enough for a logistics operations team to understand.\n\n\nIMPORTANT:\n\nUse only the shipment information provided below.\n\nDo not invent shipment events, locations, customer information, delivery attempts, or operational actions.\n\nReturn only the requested structured fields.\n\n\nSHIPMENT INFORMATION:\n\nShipment ID: {{ $json.shipmentId }}\n\nTracking Number: {{ $json.trackingNumber }}\n\nCustomer Name: {{ $json.customerName }}\n\nCustomer Phone: {{ $json.customerPhone }}\n\nOrigin: {{ $json.origin }}\n\nDestination: {{ $json.destination }}\n\nCurrent Location: {{ $json.currentLocation }}\n\nShipment Status: {{ $json.shipmentStatus }}\n\nExpected Delivery: {{ $json.expectedDelivery }}\n\nLast Updated: {{ $json.lastUpdated }}\n\nRemarks: {{ $json.remarks }}\n\nData Received At: {{ $json.ingestedAt }}",
+        "hasOutputParser": true,
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        2032,
+        160
+      ],
+      "id": "a27801f1-e027-4dbd-acac-b267320a3492",
+      "name": "AI Shipment Classifier"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        2040,
+        376
+      ],
+      "id": "0031fc8c-009b-46ec-b7fb-5b6132f4a823",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "p58sHs9rhCniNJBi",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"shipment_status\": \"IN_TRANSIT\",\n  \"exception_type\": \"NONE\",\n  \"priority\": \"LOW\",\n  \"confidence\": 0.97,\n  \"requires_human_review\": false,\n  \"reason\": \"Shipment is moving normally toward the destination.\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        2168,
+        376
+      ],
+      "id": "10fe577a-0d1a-4eed-8f30-e3f8f34225f2",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $input.item.json;\n\nconst shipmentId = item.shipmentId || \"UNKNOWN\";\nconst trackingNumber = item.trackingNumber || \"N/A\";\nconst recipientPhone = item.recipientPhone || \"N/A\";\nconst messageText = item.messageText || \"\";\n\nreturn {\n  json: {\n    ...item,\n\n    notificationChannel: \"WHATSAPP_SIMULATION\",\n    notificationStatus: \"SIMULATED\",\n    notificationResult: \"TEST_ONLY\",\n\n    simulatedMessageId:\n      `SIM-WA-${shipmentId}-${Date.now()}`,\n\n    recipientPhone,\n    messageText,\n\n    simulatedAt: new Date().toISOString(),\n\n    simulationNote:\n      \"WhatsApp notification simulated for portfolio testing. \" +\n      \"No real WhatsApp message was sent.\"\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3056,
+        160
+      ],
+      "id": "e16691cc-4372-4c3d-b565-876798ff6410",
+      "name": "Send Shipment Notification"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1TIPMODDWLCpi9ntB2g7GGLS9Ozsk0gdukkft8vkebM4",
+          "mode": "list",
+          "cachedResultName": "AI Shipment Operations Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TIPMODDWLCpi9ntB2g7GGLS9Ozsk0gdukkft8vkebM4/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1TIPMODDWLCpi9ntB2g7GGLS9Ozsk0gdukkft8vkebM4/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "shipment_id": "={{ $json.shipmentId }}",
+            "tracking_number": "={{ $json.trackingNumber }}",
+            "customer_name": "={{ $json.customerName }}",
+            "customer_phone": "={{ $json.customerPhone }}",
+            "origin": "={{ $json.origin }}",
+            "destination": "={{ $json.destination }}",
+            "current_location": "={{ $json.currentLocation }}",
+            "shipment_status": "={{ $json.shipmentStatus }}",
+            "exception_type": "={{ $json.exceptionType }}",
+            "priority": "={{ $json.priority }}",
+            "confidence": "={{ $json.confidence }}",
+            "requires_human_review": "={{ $json.requiresHumanReview }}",
+            "reason": "={{ $json.reason }}",
+            "expected_delivery": "={{ $json.expectedDelivery }}",
+            "last_updated": "={{ $json.lastUpdated }}",
+            "notification_channel": "={{ $json.notificationChannel }}",
+            "notification_status": "={{ $json.notificationStatus }}",
+            "notification_result": "={{ $json.notificationResult }}",
+            "notification_message_id": "{{ $json.simulatedMessageId }",
+            "processing_status": "PROCESSED",
+            "processed_at": "={{ $json.notificationProcessedAt }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "shipment_id",
+              "displayName": "shipment_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "tracking_number",
+              "displayName": "tracking_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "customer_phone",
+              "displayName": "customer_phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "origin",
+              "displayName": "origin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "destination",
+              "displayName": "destination",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "current_location",
+              "displayName": "current_location",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "shipment_status",
+              "displayName": "shipment_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "exception_type",
+              "displayName": "exception_type",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "confidence",
+              "displayName": "confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "requires_human_review",
+              "displayName": "requires_human_review",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "reason",
+              "displayName": "reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "expected_delivery",
+              "displayName": "expected_delivery",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "last_updated",
+              "displayName": "last_updated",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notification_channel",
+              "displayName": "notification_channel",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notification_status",
+              "displayName": "notification_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notification_result",
+              "displayName": "notification_result",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "notification_message_id",
+              "displayName": "notification_message_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processing_status",
+              "displayName": "processing_status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processed_at",
+              "displayName": "processed_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        3504,
+        80
+      ],
+      "id": "68ff36d3-ba62-4203-8876-60c178d0e579",
+      "name": "Update Shipment Operations Tracker",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "glkLz9j8JiQrAUz8",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Shipment Event Webhook": {
+      "main": [
+        [
+          {
+            "node": "Normalize Shipment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll Shipment System": {
+      "main": [
+        [
+          {
+            "node": "Normalize Shipment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Shipment Data": {
+      "main": [
+        [
+          {
+            "node": "AI Shipment Classifier",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Shipment Event": {
+      "main": [
+        [
+          {
+            "node": "API Rate Limit Protection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Rate Limit Protection": {
+      "main": [
+        [
+          {
+            "node": "Build Shipment Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Shipment Notification": {
+      "main": [
+        [
+          {
+            "node": "Send Shipment Notification",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Capture Notification Result": {
+      "main": [
+        [
+          {
+            "node": "Update Shipment Operations Tracker",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Shipment Classifier": {
+      "main": [
+        [
+          {
+            "node": "Validate Shipment Event",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Shipment Classifier",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Shipment Classifier",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send Shipment Notification": {
+      "main": [
+        [
+          {
+            "node": "Shipment Error Handler",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Capture Notification Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Shipment Operations Tracker": {
+      "main": [
+        [
+          {
+            "node": "Shipment Error Handler",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Shipment API Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "d21fbb55-8f30-4e7a-9969-a05bf9529704",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b5c4c433300af6e6085cbda8f2ac6b56a06d6a231860c257d9d66c9227948b19"
+  },
+  "nodeGroups": [],
+  "id": "poj6Za0i9NvNmSPs",
+  "tags": [
+    {
+      "updatedAt": "2026-09-18T04:30:37.063Z",
+      "createdAt": "2026-09-18T04:30:37.063Z",
+      "id": "OoljayFabNtU0kXo",
+      "name": "whatsapp"
+    },
+    {
+      "updatedAt": "2026-09-18T04:30:37.084Z",
+      "createdAt": "2026-09-18T04:30:37.084Z",
+      "id": "pb9TZQvY3VsNPb9d",
+      "name": "order-tracking"
+    },
+    {
+      "updatedAt": "2026-09-18T04:30:37.038Z",
+      "createdAt": "2026-09-18T04:30:37.038Z",
+      "id": "vyNbNBVSGTLRiVYw",
+      "name": "ecommerce"
+    }
+  ]
+}
