@@ -1,0 +1,47 @@
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Credentials / secrets
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+service-account*.json
+
+# Local n8n data
+.n8n/
+n8n-data/
+*.sqlite
+*.sqlite3
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# VS Code local settings
+.vscode/
+
+# Node.js
+node_modules/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+
+# Local test outputs
+test/output/
